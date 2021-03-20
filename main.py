@@ -1,21 +1,31 @@
 import subprocess
+import platform
 from getpass import getpass
 import datetime as dt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
+# Initial setup of variable.
 graph = plt.figure()
 graph.tight_layout()
 ax = graph.add_subplot()
 ax2 = ax.twinx()
-temperature_color = "tab:red"
-fan_speed_color = "tab:blue"
 x_axis_data = []
 y_axis_data = []
 y2_axis_data = []
+temperature_color = "tab:red"
+fan_speed_color = "tab:blue"
 plt.title("CPU Temperature and Fan Speed over Time")
 ax.set_ylabel("Temperature (deg C)", color=temperature_color)
 ax2.set_ylabel("Fan speed (RPM)", color=fan_speed_color)
+
+
+def verify_os():
+    os_name = platform.system()
+    print("OS name : " + os_name)
+    print("OS version : " + platform.release())
+    if "Darwin" != os_name:
+        raise ValueError("Unsuuported OS. This script only works on MacOS.")
 
 
 def extract_metric(data_string, metric_name, value_idx):
@@ -28,8 +38,7 @@ def extract_metric(data_string, metric_name, value_idx):
 
 
 def get_powermetrics(user_pass):
-    cpu_temperature_value = -1
-    fan_speed = -1
+    cpu_temperature_value = fan_speed = -1
     command = "powermetrics --samplers smc -n1".split()
     cmd_to_pass_password = subprocess.Popen(["echo", user_pass], stdout=subprocess.PIPE)
     cmd_power_metric = subprocess.run(
@@ -75,12 +84,18 @@ def update_graph(i, x_axis_data, y_axis_data, y2_axis_data, user_pass):
 
 
 # Set up plot to cal(l animate() function periodically
-print("####### Starting Script #######")
-user_pass = str(getpass())
-ani = animation.FuncAnimation(
-    graph,
-    update_graph,
-    fargs=(x_axis_data, y_axis_data, y2_axis_data, user_pass),
-    interval=3000,
-)
-plt.show()
+def main():
+    user_pass = str(getpass())
+    ani = animation.FuncAnimation(
+        graph,
+        update_graph,
+        fargs=(x_axis_data, y_axis_data, y2_axis_data, user_pass),
+        interval=3000,
+    )
+    plt.show()
+
+
+if __name__ == "__main__":
+    print("####### Starting Script #######")
+    verify_os()
+    main()
